@@ -2,6 +2,7 @@ package engine
 
 import (
 	"github.com/pion/ice/v2"
+	"github.com/pion/interceptor"
 	log "github.com/pion/ion-log"
 	"github.com/pion/webrtc/v3"
 )
@@ -39,8 +40,11 @@ func NewTransport(role Target, rtc *RTC) *Transport {
 		log.Errorf("getPublisherMediaEngine error: %v", err)
 		return nil
 	}
-
-	api = webrtc.NewAPI(webrtc.WithMediaEngine(me), webrtc.WithSettingEngine(rtc.config.WebRTC.Setting))
+	//Interceptor
+	m := &webrtc.MediaEngine{}
+	ir := &interceptor.Registry{}
+	webrtc.ConfigureNack(m, ir)
+	api = webrtc.NewAPI(webrtc.WithMediaEngine(me), webrtc.WithInterceptorRegistry(ir), webrtc.WithSettingEngine(rtc.config.WebRTC.Setting))
 	t.pc, err = api.NewPeerConnection(rtc.config.WebRTC.Configuration)
 
 	if err != nil {
